@@ -50,6 +50,150 @@ def brute_force_tsp(coordinates, cutoff_time):
     total_time = round((time.time() - start_time), 5)
     return best_tour, best_distance, total_time
 
+
+def read_tsp_mst(file_path):
+     """
+     This function reads the tsp files
+
+     Parameters
+     ----------
+     file_path : TSP file
+          File name.
+
+     Returns
+     -------
+     city_pos : list
+          A list with all coordinates.
+
+     """
+     
+     with open(file_path, 'r') as file:
+         lines = file.readlines()
+     
+     # Find the section containing city coordinates
+     node_coord_section_line = next(line for line in lines if line.startswith('NODE_COORD_SECTION'))
+     node_coord_section_index = lines.index(node_coord_section_line) + 1
+     
+     # Extract city coordinates
+     city_data = [line.split() for line in lines[node_coord_section_index:] if line.strip() and line != "EOF"]
+     
+     # Store coordinates in a list
+     city_data.pop()
+     city_pos = [(float(x), float(y)) for _, x, y in city_data]
+     
+     return city_pos
+
+
+
+def find_mst(city_pos):
+     """
+     This function finds the MST given the city coordinates
+
+     Parameters
+     ----------
+     city_pos : list
+          A list of coordinates of the regions
+
+     Returns
+     -------
+     edge_li : list
+          A list of edges in the MST.
+
+     """
+     
+     
+     num_cities = len(city_pos)
+     
+     # A matrix storing all the distances
+     dis_mat = []
+     
+     for i in range(num_cities):
+          dis_li = []
+          for j in range(num_cities):
+               distance = (city_pos[i][0] - city_pos[j][0])**2 + \
+                    (city_pos[i][1] - city_pos[j][1])**2
+               
+               distance = distance ** 0.5
+               
+               dis_li.append(distance)
+               
+          dis_mat.append(dis_li)
+     
+     edge_li = []
+     visited_cities = [1]
+     unvisited_cities = [_ for _ in range(2, num_cities+1)]
+     
+     while len(unvisited_cities) > 0:
+          min_cost = float('inf')
+          for i in visited_cities:
+               for j in unvisited_cities:
+                    if dis_mat[i-1][j-1] < min_cost:
+                         min_cost = dis_mat[i-1][j-1] 
+                         min_cost_edge = (i, j)
+          edge_li.append(min_cost_edge)
+          visited_cities.append(min_cost_edge[1])
+          unvisited_cities.remove(min_cost_edge[1])
+          
+     return edge_li
+
+
+
+def dfs(edge_li):
+     """
+     This function traverses a MST by DFS
+
+     Parameters
+     ----------
+     edge_li : list
+          A list store all the edges in the MST.
+
+     Returns
+     -------
+     traverse_li : list
+          The order of traverse
+
+     """
+     
+     S = [1]  # the initialized stack
+     traverse_li = []
+     
+     explored = {i: False for i in range(1, len(edge_li)+2)}
+     
+     while len(S) > 0:
+          u = S.pop()
+          if explored[u] == False:
+               traverse_li.append(u)
+               explored[u] = True
+               
+               for (i, j) in edge_li:
+                    if i == u:
+                         S.append(j)
+                    elif j == u:
+                         S.append(i)   
+     
+                         
+     return traverse_li
+
+
+def compute_final_cost_mst(traverse_li, city_pos):
+     final_cost = 0
+     city_num = len(traverse_li)
+     for i in range(city_num):
+          if i != city_num-1:
+               distance = (city_pos[traverse_li[i]-1][0] - city_pos[traverse_li[i+1]-1][0])**2 + \
+                    (city_pos[traverse_li[i]-1][1] - city_pos[traverse_li[i+1]-1][1])**2
+               
+               distance = distance ** 0.5
+               final_cost += distance
+          else:
+               distance = (city_pos[traverse_li[i]-1][0] - city_pos[traverse_li[0]-1][0])**2 + \
+                    (city_pos[traverse_li[i]-1][1] - city_pos[traverse_li[0]-1][1])**2
+               
+               distance = distance ** 0.5
+               final_cost += distance
+               
+     return int(final_cost)
+
 # 写你们的function：
     #def()
 
@@ -74,7 +218,15 @@ def main(tsp,algo,cutoff):
                 coordinates.append((id, x, y))
         best_tour, distance, total_time = brute_force_tsp(coordinates,cutoff)
 
-    print('BF Algo Runtime: ' + str(total_time))
+        print('BF Algo Runtime: ' + str(total_time))
+    
+    if algo == 'Approx':
+         city_pos = read_tsp_mst(tsp)
+         tic = time.time()
+         edge_li = find_mst(city_pos)
+         best_tour = dfs(edge_li)
+         distance = compute_final_cost_mst(best_tour, city_pos)
+         total_time = time.time() - tic
 
     with open(os.path.join(output_dir, sol_file), 'w') as f:
         f.write(str(int(distance)) + "\n")
