@@ -322,7 +322,7 @@ def main(tsp,algo,cutoff,seed):
         sol_file = "_".join([tsp_name, algo,str(seed)]) + '.sol'
         with open(os.path.join(output_dir, sol_file), 'w') as f:
             f.write(str(LS_cost) + "\n")
-            f.write(','.join([str(vertex) for vertex in LS_solution]))
+            f.write(','.join([str(vertex+1) for vertex in LS_solution]))
         f.close()
     
 
