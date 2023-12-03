@@ -191,7 +191,7 @@ def compute_final_cost_mst(traverse_li, city_pos):
     #def()
 
 class LS():
-    def __init__(self, seed, fname):
+    def __init__(self, seed, fname, cutoff):
         self.seed = seed
 
         #parameters of simulated annealing
@@ -202,6 +202,8 @@ class LS():
         self.nSteps = 2000000 # total number of steps
         self.stopping_temp = 1
         self.t = 0
+        self.cutoff = cutoff
+        self.total_time = 0
 
         self.n = 0
         self.pos = None
@@ -245,7 +247,8 @@ class LS():
         return sol_new
     
     def cost_optimization(self):
-        while self.t < self.nSteps and self.T > self.stopping_temp:
+        start_time = time.time()
+        while self.t < self.nSteps and self.T > self.stopping_temp and self.total_time<self.cutoff:
             self.solution_new = self.swap_node_pair_at_random(self.solution)
             self.cost_new = self.cost_func(self.solution_new)
 
@@ -266,7 +269,10 @@ class LS():
             if self.t % self.M == self.M-1:
                 self.T *= self.coolingFraction
             self.t += 1
-        return self.cost, self.solution
+
+            self.total_time=round((time.time() - start_time), 5)
+
+        return self.cost, self.solution, self.total_time
 
 
 def main(tsp,algo,cutoff,seed):
@@ -311,15 +317,15 @@ def main(tsp,algo,cutoff,seed):
         f.close()
 
     if algo == "LS":
-        start_time = time.time()
+        #start_time = time.time()
         #initialize
-        LS_algo = LS(seed, tsp)
-        LS_cost, LS_solution = LS_algo.cost_optimization()
-        total_time = round((time.time() - start_time), 5)
+        LS_algo = LS(seed, tsp, cutoff)
+        LS_cost, LS_solution, total_time = LS_algo.cost_optimization()
+        #total_time = round((time.time() - start_time), 5)
         
         print('LS Algo Runtime: ' + str(total_time))
         
-        sol_file = "_".join([tsp_name, algo,str(seed)]) + '.sol'
+        sol_file = "_".join([tsp_name, algo, str(cutoff),str(seed)]) + '.sol'
         with open(os.path.join(output_dir, sol_file), 'w') as f:
             f.write(str(LS_cost) + "\n")
             f.write(','.join([str(vertex+1) for vertex in LS_solution]))
