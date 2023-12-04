@@ -177,13 +177,13 @@ def compute_final_cost_mst(traverse_li, city_pos):
                     (city_pos[traverse_li[i]-1][1] - city_pos[traverse_li[i+1]-1][1])**2
                
                distance = distance ** 0.5
-               final_cost += distance
+               final_cost += round(distance)
           else:
                distance = (city_pos[traverse_li[i]-1][0] - city_pos[traverse_li[0]-1][0])**2 + \
                     (city_pos[traverse_li[i]-1][1] - city_pos[traverse_li[0]-1][1])**2
                
                distance = distance ** 0.5
-               final_cost += distance
+               final_cost += round(distance)
                
      return int(final_cost)
 
